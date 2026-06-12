@@ -1,0 +1,33 @@
+-- EXAMEN SQL
+-- Auditoria en cambios de clientes
+
+USE proyecto;
+
+
+CREATE TABLE Auditoria_Clientes (
+    id_Auditoria   INT           NOT NULL AUTO_INCREMENT,
+    id_Cliente     INT           NOT NULL,
+    campo_Modificado     Email('Email', 'Direccion_Envio'),
+    precio_anterior VARCHAR (255),
+    precio_Nuevo    VARCHAR (255) NOT NULL,
+    fecha_Modificacion database DEFAULT current_timestamp,
+    FOREIGN KEY (id_Cliente) REFERENCES clientes (id_Clientes)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE
+);
+
+
+DROP TRIGGER IF EXISTS trg_audit_cliente_after_update$$
+CREATE TRIGGER trg_audit_cliente_after_update
+BEFORE DELETE ON Auditoria_Clientes
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria_Clientes (id_Cliente, campo_Modificado)
+    VALUES (NEW.Campo_Modificado, 'INSERT',
+            CONCAT('Email: ', NEW.Email, ' ',' | Direccion_Envio: ', NEW.Direccion_Envio));
+           
+    IF OLD.precio_Nuevo <> NEW.precio_Nuevo THEN
+        INSERT INTO Auditoria_Clientes (precio_Viejo, precio_Nuevo)
+        VALUES (NEW.precio_Nuevo, OLD.precio_Nuevo());
+    END IF;
+END$$;
